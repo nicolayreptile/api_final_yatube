@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
+from django_filters.rest_framework import DjangoFilterBackend
+
 from api import serializers
 from api.models import Post, Group, Follow
 from api.permissions import IsOwnerOrReadOnly
@@ -15,16 +17,12 @@ User = get_user_model()
 class PostViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.PostSerializer
     permission_classes = (IsOwnerOrReadOnly, )
+    queryset = Post.objects.all()
+    filter_backends = (DjangoFilterBackend, )
+    filterset_fields = ('group', )
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
-    def get_queryset(self):
-        pk = self.request.query_params.get('group')
-        if pk is not None:
-            group = get_object_or_404(Group, pk=pk)
-            return group.posts
-        return Post.objects.all()
 
 
 class CommentViewSet(viewsets.ModelViewSet):
